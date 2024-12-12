@@ -108,7 +108,7 @@ def display_results(data):
     st.write(cr_message)
 
 def main():
-    st.title("AHP Model for Producer Evaluation")
+    st.title("Dairy Selection Tool")
     data = get_user_input()
     if st.button("Calculate AHP"):
         display_results(data)
