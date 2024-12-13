@@ -139,7 +139,7 @@ if data_input_method == "Upload CSV file":
             consistency_result = check_consistency(comparison_matrix)
             st.write(consistency_result)
   
-     else:
+         else:
             st.info("Upload a CSV file to get started.")
 
             # --- Adicionando um exemplo de arquivo CSV para download ---
