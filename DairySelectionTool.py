@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 import streamlit as st
 
-# Define os subcritérios e os pesos normalizados
+# Define the sub-criteria and normalized weights
 subcriteria = {
     'Economic': [
         'Accessibility of financial resources',
@@ -27,65 +27,97 @@ subcriteria = {
 }
 
 normalized_weights = {
-    'Accessibility of financial resources': 0.0606,
-    'Type and frequency of financial incentives': 0.0641,
-    'Duration of stable pricing periods': 0.0691,
-    'Competitiveness of exclusive price': 0.0583,
-    'Ratio of price adjustments to quality': 0.0794,
-    'Transparency of council-defined pricing': 0.1058,
-    'Impact of international price fluctuations': 0.0726,
-    'Benefit of exclusivity for long-term partnerships': 0.0742,
-    'Frequency and quality of technical visits': 0.0897,
-    'Length and flexibility of contract terms': 0.0558,
-    'Penalties or rewards for delivery schedules': 0.0766,
-    'Consistency in daily milk production': 0.0651,
-    'Adherence to quality standards': 0.0578,
-    'Economic viability of collection for different volumes': 0.0710
+    'Accessibility of financial resources': 0.096,
+    'Type and frequency of financial incentives': 0.166,
+    'Duration of stable pricing periods': 0.267,
+    'Competitiveness of exclusive price': 0.050,
+    'Ratio of price adjustments to quality': 0.039,
+    'Transparency of council-defined pricing': 0.304,
+    'Impact of international price fluctuations': 0.000,
+    'Benefit of exclusivity for long-term partnerships': 1.000,
+    'Frequency and quality of technical visits': 0.337,
+    'Length and flexibility of contract terms': 0.368,
+    'Penalties or rewards for delivery schedules': 0.678,
+    'Consistency in daily milk production': 0.000,
+    'Adherence to quality standards': 0.416,
+    'Economic viability of collection for different volumes': 0.186
 }
 
-# Matriz de comparação par-a-par fornecida
-comparison_matrix = np.array([
-    # [Adicione aqui a matriz]
-])
+# Function to calculate Consistency Index (CI)
+def calculate_consistency(matrix):
+    n = len(matrix)
+    eigenvalue = np.mean(np.sum(matrix, axis=1) / np.sum(matrix, axis=0))  # Simplified eigenvalue calculation
+    ci = (eigenvalue - n) / (n - 1)
+    return ci
 
-# Função para calcular a consistência da matriz
-def check_consistency(matrix):
-    eigenvalues, _ = np.linalg.eig(matrix)
-    lambda_max = max(eigenvalues).real  # Usa apenas a parte real
-    n = matrix.shape[0]
-    CI = (lambda_max - n) / (n - 1)
-    RI_values = {1: 0.0, 2: 0.0, 3: 0.58, 4: 0.90, 5: 1.12, 6: 1.24, 7: 1.32, 8: 1.41, 9: 1.45, 10: 1.49, 11: 1.51, 12: 1.54, 13: 1.56, 14: 1.59}
-    RI = RI_values.get(n, 1.59)  # Usa 1.59 como padrão para n >= 14
-    CR = CI / RI if RI != 0 else 0
-    return f"The Consistency Ratio is {'acceptable' if CR < 0.1 else 'not acceptable'}: {CR:.4f}"
+# Function to calculate Random Consistency Index (RI)
+def get_ri(n):
+    ri_dict = {1: 0.00, 2: 0.00, 3: 0.58, 4: 0.90, 5: 1.12, 6: 1.24, 7: 1.32, 8: 1.41, 9: 1.45, 10: 1.49}
+    return ri_dict.get(n, 1.49)  # Default for 10 criteria or more
 
-# Função para calcular a pontuação total dos produtores
-def calculate_scores(df):
-    df['Economic Score'] = df['Economic'] * sum([normalized_weights[sub] for sub in subcriteria['Economic']])
-    df['Social Score'] = df['Social'] * sum([normalized_weights[sub] for sub in subcriteria['Social']])
-    df['Production Score'] = df['Production'] * sum([normalized_weights[sub] for sub in subcriteria['Production']])
-    df['Total Score'] = df['Economic Score'] + df['Social Score'] + df['Production Score']
-    df['Ranking'] = df['Total Score'].rank(ascending=False)
-    return df
+# Function to get user input for scores
+def get_user_input():
+    num_producers = st.number_input("Enter the number of producers (1-10):", min_value=1, max_value=10, value=3, step=1)
+    producers = [f'Producer {i+1}' for i in range(num_producers)]
 
-# Interface Streamlit
-st.title("AHP for Milk Producer Evaluation")
+    data = []
+    for producer_idx, producer in enumerate(producers):
+        st.header(f"Input data for {producer}")
+        for criterion, subs in subcriteria.items():
+            st.subheader(criterion)
+            for sub_idx, sub in enumerate(subs):
+                score = st.number_input(
+                    f"{sub}:",
+                    min_value=0, max_value=10, value=5, step=1, format="%d",
+                    key=f"{producer_idx}_{criterion}_{sub_idx}"
+                )
+                data.append({
+                    'Producer': producer,
+                    'Subcriterion': sub,
+                    'Score': score
+                })
 
-# Opções para inserir dados: upload de arquivo ou entrada manual
-data_input_method = st.radio("Select data input method:", ("Upload CSV file", "Manual entry"))
+    return data
 
-if data_input_method == "Upload CSV file":
-    uploaded_file = st.file_uploader("Upload producer data (CSV)", type="csv")
+# Function to display the results
+def display_results(data):
+    scores_df = pd.DataFrame(data)
+    weights_df = pd.DataFrame({
+        'Subcriterion': list(normalized_weights.keys()),
+        'Normalized Weight': list(normalized_weights.values())
+    })
 
-    if uploaded_file is not None:
-        df_producers = pd.read_csv(uploaded_file)
+    # Calculate the weighted scores
+    scores_df['Weighted Score'] = scores_df.apply(lambda row: row['Score'] * normalized_weights[row['Subcriterion']], axis=1)
+    total_scores = scores_df.groupby('Producer')['Weighted Score'].sum().reset_index()
+    total_scores = total_scores.sort_values(by='Weighted Score', ascending=False)
 
-        required_columns = ['Producer', 'Economic', 'Social', 'Production']
-        if not all(col in df_producers.columns for col in required_columns):
-            st.error(f"CSV file must contain these columns: {required_columns}")
-        else:
-            df_producers = calculate_scores(df_producers)
-            st.write("AHP Results:")
-            st.dataframe(df_producers)
-else:
-    st.write("Manual entry is not yet implemented.")
+    # Rank the producers from 1 to the total number of producers
+    total_scores['Ranking'] = total_scores['Weighted Score'].rank(ascending=False, method='min').astype(int)
+
+    # Display the results
+    st.write("AHP Results:")
+    st.write(total_scores[['Ranking', 'Producer', 'Weighted Score']])
+
+    # Consistency matrix example (user input should ideally provide this)
+    consistency_matrix = np.random.rand(len(subcriteria), len(subcriteria))  # Placeholder for actual matrix
+    ci = calculate_consistency(consistency_matrix)
+    ri = get_ri(len(subcriteria))
+    cr = ci / ri
+    cr_message = "Consistency Ratio (CR) is acceptable." if cr < 0.10 else "Consistency Ratio (CR) is not acceptable."
+
+    # Display consistency check results
+    st.write("Consistency Check:")
+    st.write(f"Consistency Index (CI): {ci}")
+    st.write(f"Random Consistency Index (RI): {ri}")
+    st.write(f"Consistency Ratio (CR): {cr}")
+    st.write(cr_message)
+
+def main():
+    st.title("Dairy Selection Tool")
+    data = get_user_input()
+    if st.button("Calculate AHP"):
+        display_results(data)
+
+if __name__ == '__main__':
+    main()
