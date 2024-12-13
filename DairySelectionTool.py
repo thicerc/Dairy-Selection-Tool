@@ -107,51 +107,49 @@ st.title("Dairy Selection Tool")
 data_input_method = st.radio("Select data input method:", ("Upload CSV file", "Manual entry"))
 
 if data_input_method == "Upload CSV file":
-    # Upload de arquivo CSV
-    uploaded_file = st.file_uploader("Upload producer data (CSV)", type="csv")
-
+    uploaded_file = st.file_uploader("Upload your CSV file here:", type=["csv"])
     if uploaded_file is not None:
-        df_producers = pd.read_csv(uploaded_file)
+        # Carregar os dados do arquivo CSV
+        df = pd.read_csv(uploaded_file)
+        st.write("Uploaded Data:")
+        st.dataframe(df)
 
-        # Verificar se as colunas necessárias existem no DataFrame
-        required_columns = ['Producer', 'Economic', 'Social', 'Production']
-        if not all(col in df_producers.columns for col in required_columns):
-            st.error(f"CSV file must contain these columns: {required_columns}")
+        # Verificar se as colunas necessárias estão presentes
+        required_columns = ['Economic', 'Social', 'Production']
+        if all(col in df.columns for col in required_columns):
+            # Calcular as pontuações e exibir os resultados
+            results = calculate_scores(df)
+            st.write("Producer Scores and Rankings:")
+            st.dataframe(results)
         else:
-            # Calcular e exibir resultados
-            df_producers = calculate_scores(df_producers)
-            st.write("AHP Results:")
-            st.dataframe(df_producers[['Producer', 'Total Score', 'Ranking']])
-
-            # Exibir o resultado da verificação de consistência
-            consistency_result = check_consistency(comparison_matrix)
-            st.write(consistency_result)
-    else:
-        st.info("Upload a CSV file to get started.")
-
+            st.error(f"CSV file must contain the following columns: {', '.join(required_columns)}")
 elif data_input_method == "Manual entry":
-    # Entrada manual de dados
-    st.subheader("Enter Producer Data:")
-    num_producers = st.number_input("Number of producers:", min_value=1, value=1, step=1)
+    st.write("Enter the data manually:")
 
-    producer_data = []
+    # Solicitar o número de produtores
+    num_producers = st.number_input("Number of producers:", min_value=1, step=1, value=1)
+
+    # Criar entradas para cada produtor
+    producers_data = []
     for i in range(num_producers):
-        st.write(f"**Producer {i+1}**")
-        producer_name = st.text_input(f"Producer Name {i+1}:", value=f"Producer {i+1}")
-        
-        # Entrada de dados com nomes dos critérios nas legendas
-        economic_score = st.number_input(f"Economic Score ({', '.join(subcriteria['Economic'])}) {i+1}:", min_value=0, max_value=10, value=5, step=1)
-        social_score = st.number_input(f"Social Score ({', '.join(subcriteria['Social'])}) {i+1}:", min_value=0, max_value=10, value=5, step=1)
-        production_score = st.number_input(f"Production Score ({', '.join(subcriteria['Production'])}) {i+1}:", min_value=0, max_value=10, value=5, step=1)
-        
-        producer_data.append([producer_name, economic_score/10, social_score/10, production_score/10])
+        st.write(f"Producer {i + 1}")
+        economic = st.number_input(f"  Economic score for Producer {i + 1}:", min_value=0.0, step=0.1, value=0.0)
+        social = st.number_input(f"  Social score for Producer {i + 1}:", min_value=0.0, step=0.1, value=0.0)
+        production = st.number_input(f"  Production score for Producer {i + 1}:", min_value=0.0, step=0.1, value=0.0)
+        producers_data.append({
+            "Economic": economic,
+            "Social": social,
+            "Production": production
+        })
 
-    if st.button("Calculate AHP"):
-        df_producers = pd.DataFrame(producer_data, columns=['Producer', 'Economic', 'Social', 'Production'])
-        df_producers = calculate_scores(df_producers)
-        st.write("Ranking:")
-        st.dataframe(df_producers[['Producer', 'Total Score', 'Ranking']])
+    if st.button("Calculate Scores"):
+        if producers_data:
+            # Converter os dados em DataFrame
+            df_manual = pd.DataFrame(producers_data)
 
-        # Exibir o resultado da verificação de consistência
-        consistency_result = check_consistency(comparison_matrix)
-        st.write(consistency_result)
+            # Calcular as pontuações e exibir os resultados
+            results_manual = calculate_scores(df_manual)
+            st.write("Producer Scores and Rankings (Manual Entry):")
+            st.dataframe(results_manual)
+        else:
+            st.error("No data entered.")
