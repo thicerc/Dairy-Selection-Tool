@@ -1,4 +1,4 @@
-import pandas as pd 
+import pandas as pd
 import numpy as np
 import streamlit as st
 
@@ -46,6 +46,7 @@ normalized_weights = {
 # Function to calculate Consistency Index (CI)
 def calculate_consistency(matrix):
     n = len(matrix)
+    # Calculate the principal eigenvalue (lambda_max)
     eigenvalue = np.mean(np.sum(matrix, axis=1) / np.sum(matrix, axis=0))
     ci = (eigenvalue - n) / (n - 1)
     return ci
