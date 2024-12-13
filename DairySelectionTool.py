@@ -61,7 +61,7 @@ comparison_matrix = np.array([
     [1.17161716, 1.10764431, 1.02749638, 1.21783877, 0.89420655, 0.6710775, 0.97796143, 0.95687332, 0.79152731, 1.27240143, 0.92689295, 1.0906298, 1.2283737, 1.0]
 ])
 
-# Função para calcular a consistência da matriz
+# Função para calcular a consistência da matriz (com nomes em inglês britânico)
 def check_consistency(matrix):
     eigenvalues, _ = np.linalg.eig(matrix)
     lambda_max = max(eigenvalues)
@@ -70,10 +70,17 @@ def check_consistency(matrix):
     RI_values = {1: 0.0, 2: 0.0, 3: 0.58, 4: 0.90, 5: 1.12, 6: 1.24, 7: 1.32, 8: 1.41, 9: 1.45, 10: 1.49, 11: 1.51, 12: 1.54, 13: 1.56, 14: 1.59}
     RI = RI_values[n]
     CR = CI / RI
+
+    # Exibir resultados da verificação de consistência em inglês britânico
+    st.write("Consistency Check:")
+    st.write(f"Maximum Eigenvalue (λ_max): {lambda_max:.4f}")  # Nome em inglês britânico
+    st.write(f"Consistency Index (CI): {CI:.4f}")
+    st.write(f"Consistency Ratio (CR): {CR:.4f}")
+
     if CR < 0.1:
-        return f"The Consistency Ratio is acceptable: {CR:.4f}"
+        st.write("The Consistency Ratio is acceptable.")  # Mensagem em inglês britânico
     else:
-        return f"The Consistency Ratio is not acceptable: {CR:.4f}"
+        st.write("The Consistency Ratio is not acceptable.")  # Mensagem em inglês britânico
 
 # Função para calcular a pontuação total dos produtores
 def calculate_scores(df):
@@ -85,7 +92,7 @@ def calculate_scores(df):
     return df
 
 # Interface Streamlit
-st.title("AHP for Milk Producer Evaluation")
+st.title("Dairy Selection Tool")
 
 # Opções para inserir dados: upload de arquivo ou entrada manual
 data_input_method = st.radio("Select data input method:", ("Upload CSV file", "Manual entry"))
