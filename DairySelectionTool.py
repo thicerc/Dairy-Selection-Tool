@@ -71,16 +71,25 @@ def check_consistency(matrix):
     RI = RI_values[n]
     CR = CI / RI
 
-    # Exibir resultados da verificação de consistência em inglês britânico
-    st.write("Consistency Check:")
-    st.write(f"Maximum Eigenvalue (λ_max): {lambda_max:.4f}")  # Nome em inglês britânico
-    st.write(f"Consistency Index (CI): {CI:.4f}")
-    st.write(f"Consistency Ratio (CR): {CR:.4f}")
+    # Criar um dicionário com os resultados
+    consistency_results = {
+        "Maximum Eigenvalue (λ_max)": [lambda_max],
+        "Consistency Index (CI)": [CI],
+        "Consistency Ratio (CR)": [CR],
+    }
 
+    # Criar um DataFrame com os resultados
+    df_consistency = pd.DataFrame(consistency_results)
+
+    # Exibir o DataFrame no Streamlit
+    st.write("Consistency Check:")
+    st.dataframe(df_consistency.style.format("{:.4f}"))  # Formatar para 4 casas decimais
+
+    # Verificar a aceitabilidade do CR
     if CR < 0.1:
-        st.write("The Consistency Ratio is acceptable.")  # Mensagem em inglês britânico
+        st.write("The Consistency Ratio is acceptable.")
     else:
-        st.write("The Consistency Ratio is not acceptable.")  # Mensagem em inglês britânico
+        st.write("The Consistency Ratio is not acceptable.")
 
 # Função para calcular a pontuação total dos produtores
 def calculate_scores(df):
