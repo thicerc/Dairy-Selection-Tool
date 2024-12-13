@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 import streamlit as st
 
-# Define the subcriteria and their normalised weights
+# Define os subcritérios e os pesos normalizados
 subcriteria = {
     'Economic': [
         'Accessibility of financial resources',
@@ -26,7 +26,7 @@ subcriteria = {
     ]
 }
 
-normalised_weights = {
+normalized_weights = {
     'Accessibility of financial resources': 0.0606,
     'Type and frequency of financial incentives': 0.0641,
     'Duration of stable pricing periods': 0.0691,
@@ -43,7 +43,7 @@ normalised_weights = {
     'Economic viability of collection for different volumes': 0.0710
 }
 
-# Pairwise comparison matrix
+# Matriz de comparação par-a-par fornecida
 comparison_matrix = np.array([
     [1.0, 0.94539782, 0.87698987, 1.03945111, 0.76322418, 0.57277883, 0.83471074, 0.81671159, 0.67558528, 1.08602151, 0.79112272, 0.93087558, 1.04844291, 0.85352113],
     [1.05775578, 1.0, 0.9276411, 1.09948542, 0.80730479, 0.60586011, 0.88292011, 0.8638814, 0.71460424, 1.14874552, 0.83681462, 0.98463902, 1.10899654, 0.9028169],
@@ -61,7 +61,7 @@ comparison_matrix = np.array([
     [1.17161716, 1.10764431, 1.02749638, 1.21783877, 0.89420655, 0.6710775, 0.97796143, 0.95687332, 0.79152731, 1.27240143, 0.92689295, 1.0906298, 1.2283737, 1.0]
 ])
 
-# Function to check matrix consistency
+# Função para calcular a consistência da matriz
 def check_consistency(matrix):
     eigenvalues, _ = np.linalg.eig(matrix)
     lambda_max = max(eigenvalues)
@@ -75,41 +75,67 @@ def check_consistency(matrix):
     else:
         return f"The Consistency Ratio is not acceptable: {CR:.4f}"
 
-# Function to calculate total scores for producers
+# Função para calcular a pontuação total dos produtores
 def calculate_scores(df):
-    df['Economic Score'] = df['Economic'] * sum([normalised_weights[criteria] for criteria in subcriteria['Economic']])
-    df['Social Score'] = df['Social'] * sum([normalised_weights[criteria] for criteria in subcriteria['Social']])
-    df['Production Score'] = df['Production'] * sum([normalised_weights[criteria] for criteria in subcriteria['Production']])
+    df['Economic Score'] = df['Economic'] * sum([normalized_weights[subcriteria_group] for subcriteria_group in subcriteria['Economic']])
+    df['Social Score'] = df['Social'] * sum([normalized_weights[subcriteria_group] for subcriteria_group in subcriteria['Social']])
+    df['Production Score'] = df['Production'] * sum([normalized_weights[subcriteria_group] for subcriteria_group in subcriteria['Production']])
     df['Total Score'] = df['Economic Score'] + df['Social Score'] + df['Production Score']
+    df['Ranking'] = df['Total Score'].rank(ascending=False)
     return df
 
-# Streamlit app
-st.title('AHP-Based Decision-Making Tool')
-st.header('Input Data')
+# Interface Streamlit
+st.title("AHP for Milk Producer Evaluation")
 
-# Input producer data
-num_producers = st.number_input('Enter the number of producers:', min_value=1, step=1)
-data = {
-    'Economic': [],
-    'Social': [],
-    'Production': []
-}
+# Opções para inserir dados: upload de arquivo ou entrada manual
+data_input_method = st.radio("Select data input method:", ("Upload CSV file", "Manual entry"))
 
-for i in range(num_producers):
-    st.subheader(f'Producer {i + 1}')
-    data['Economic'].append(st.number_input(f'Economic score for Producer {i + 1}:', min_value=0.0))
-    data['Social'].append(st.number_input(f'Social score for Producer {i + 1}:', min_value=0.0))
-    data['Production'].append(st.number_input(f'Production score for Producer {i + 1}:', min_value=0.0))
+if data_input_method == "Upload CSV file":
+    # Upload de arquivo CSV
+    uploaded_file = st.file_uploader("Upload producer data (CSV)", type="csv")
 
-df = pd.DataFrame(data)
-st.write('Input Data:', df)
+    if uploaded_file is not None:
+        df_producers = pd.read_csv(uploaded_file)
 
-# Consistency check
-st.header('Consistency Check')
-consistency_result = check_consistency(comparison_matrix)
-st.write(consistency_result)
+        # Verificar se as colunas necessárias existem no DataFrame
+        required_columns = ['Producer', 'Economic', 'Social', 'Production']
+        if not all(col in df_producers.columns for col in required_columns):
+            st.error(f"CSV file must contain these columns: {required_columns}")
+        else:
+            # Calcular e exibir resultados
+            df_producers = calculate_scores(df_producers)
+            st.write("AHP Results:")
+            st.dataframe(df_producers[['Producer', 'Total Score', 'Ranking']])
 
-# Calculate and display scores
-st.header('Producer Scores')
-df = calculate_scores(df)
-st.write('Scores:', df)
+            # Exibir o resultado da verificação de consistência
+            consistency_result = check_consistency(comparison_matrix)
+            st.write(consistency_result)
+    else:
+        st.info("Upload a CSV file to get started.")
+
+elif data_input_method == "Manual entry":
+    # Entrada manual de dados
+    st.subheader("Enter Producer Data:")
+    num_producers = st.number_input("Number of producers:", min_value=1, value=1, step=1)
+
+    producer_data = []
+    for i in range(num_producers):
+        st.write(f"**Producer {i+1}**")
+        producer_name = st.text_input(f"Producer Name {i+1}:", value=f"Producer {i+1}")
+        
+    # Entrada de dados com nomes dos critérios nas legendas
+    economic_score = st.number_input("Economic Score", min_value=0, max_value=10, value=5, step=1)
+    social_score = st.number_input("Social Score", min_value=0, max_value=10, value=5, step=1)
+    production_score = st.number_input("Production Score", min_value=0, max_value=10, value=5, step=1)
+
+    producer_data.append([producer_name, economic_score / 10, social_score / 10, production_score / 10])
+
+    if st.button("Calculate"):
+        df_producers = pd.DataFrame(producer_data, columns=['Producer', 'Economic', 'Social', 'Production'])
+        df_producers = calculate_scores(df_producers)
+        st.write("AHP Results:")
+        st.dataframe(df_producers[['Producer', 'Total Score', 'Ranking']])
+
+        # Exibir o resultado da verificação de consistência
+        consistency_result = check_consistency(comparison_matrix)
+        st.write(consistency_result)
