@@ -87,18 +87,48 @@ def calculate_scores(df):
 # Interface Streamlit
 st.title("AHP for Milk Producer Evaluation")
 
-# Upload de arquivo CSV
-uploaded_file = st.file_uploader("Upload producer data (CSV)", type="csv")
+# Opções para inserir dados: upload de arquivo ou entrada manual
+data_input_method = st.radio("Select data input method:", ("Upload CSV file", "Manual entry"))
 
-if uploaded_file is not None:
-    df_producers = pd.read_csv(uploaded_file)
+if data_input_method == "Upload CSV file":
+    # Upload de arquivo CSV
+    uploaded_file = st.file_uploader("Upload producer data (CSV)", type="csv")
 
-    # Verificar se as colunas necessárias existem no DataFrame
-    required_columns = ['Producer', 'Economic', 'Social', 'Production']
-    if not all(col in df_producers.columns for col in required_columns):
-        st.error(f"CSV file must contain these columns: {required_columns}")
+    if uploaded_file is not None:
+        df_producers = pd.read_csv(uploaded_file)
+
+        # Verificar se as colunas necessárias existem no DataFrame
+        required_columns = ['Producer', 'Economic', 'Social', 'Production']
+        if not all(col in df_producers.columns for col in required_columns):
+            st.error(f"CSV file must contain these columns: {required_columns}")
+        else:
+            # Calcular e exibir resultados
+            df_producers = calculate_scores(df_producers)
+            st.write("AHP Results:")
+            st.dataframe(df_producers[['Producer', 'Total Score', 'Ranking']])
+
+            # Exibir o resultado da verificação de consistência
+            consistency_result = check_consistency(comparison_matrix)
+            st.write(consistency_result)
     else:
-        # Calcular e exibir resultados
+        st.info("Upload a CSV file to get started.")
+
+elif data_input_method == "Manual entry":
+    # Entrada manual de dados
+    st.subheader("Enter Producer Data:")
+    num_producers = st.number_input("Number of producers:", min_value=1, value=1, step=1)
+
+    producer_data = []
+    for i in range(num_producers):
+        st.write(f"**Producer {i+1}**")
+        producer_name = st.text_input(f"Producer Name {i+1}:")
+        economic_score = st.number_input(f"Economic Score {i+1}:", min_value=0.0, max_value=1.0, value=0.5, step=0.1)
+        social_score = st.number_input(f"Social Score {i+1}:", min_value=0.0, max_value=1.0, value=0.5, step=0.1)
+        production_score = st.number_input(f"Production Score {i+1}:", min_value=0.0, max_value=1.0, value=0.5, step=0.1)
+        producer_data.append([producer_name, economic_score, social_score, production_score])
+
+    if st.button("Calculate"):
+        df_producers = pd.DataFrame(producer_data, columns=['Producer', 'Economic', 'Social', 'Production'])
         df_producers = calculate_scores(df_producers)
         st.write("AHP Results:")
         st.dataframe(df_producers[['Producer', 'Total Score', 'Ranking']])
@@ -106,5 +136,3 @@ if uploaded_file is not None:
         # Exibir o resultado da verificação de consistência
         consistency_result = check_consistency(comparison_matrix)
         st.write(consistency_result)
-else:
-    st.info("Upload a CSV file to get started.")
