@@ -27,20 +27,20 @@ subcriteria = {
 }
 
 normalized_weights = {
-    'Accessibility of financial resources': 0.096,
-    'Type and frequency of financial incentives': 0.166,
-    'Duration of stable pricing periods': 0.267,
-    'Competitiveness of exclusive price': 0.050,
-    'Ratio of price adjustments to quality': 0.039,
-    'Transparency of council-defined pricing': 0.304,
-    'Impact of international price fluctuations': 0.000,
-    'Benefit of exclusivity for long-term partnerships': 1.000,
-    'Frequency and quality of technical visits': 0.337,
-    'Length and flexibility of contract terms': 0.368,
-    'Penalties or rewards for delivery schedules': 0.678,
-    'Consistency in daily milk production': 0.000,
-    'Adherence to quality standards': 0.416,
-    'Economic viability of collection for different volumes': 0.186
+    'Accessibility of financial resources': 0.0606,
+    'Type and frequency of financial incentives': 0.0641,
+    'Duration of stable pricing periods': 0.0691,
+    'Competitiveness of exclusive price': 0.0583,
+    'Ratio of price adjustments to quality': 0.0794,
+    'Transparency of council-defined pricing': 0.1058,
+    'Impact of international price fluctuations': 0.0726,
+    'Benefit of exclusivity for long-term partnerships': 0.0742,
+    'Frequency and quality of technical visits': 0.0897,
+    'Length and flexibility of contract terms': 0.0558,
+    'Penalties or rewards for delivery schedules': 0.0766,
+    'Consistency in daily milk production': 0.0651,
+    'Adherence to quality standards': 0.0578,
+    'Economic viability of collection for different volumes': 0.0710
 }
 
 # Function to calculate Consistency Index (CI)
