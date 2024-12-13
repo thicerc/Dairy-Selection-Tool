@@ -123,31 +123,23 @@ elif data_input_method == "Manual entry":
         st.write(f"**Producer {i+1}**")
         producer_name = st.text_input(f"Producer Name {i+1}:", value=f"Producer {i+1}")
         
-        # Entrada de dados com a nova hierarquia (sem Overall)
+        # Entrada de dados com a nova hierarquia
         st.write("**Economics**")
-        economic_scores = []
+        economic_score = st.number_input(f"Overall Economic Score {i+1}:", min_value=0, max_value=10, value=5, step=1)
         for subcriterion in subcriteria['Economic']:
-            score = st.number_input(f"{subcriterion} {i+1}:", min_value=0, max_value=10, value=5, step=1)
-            economic_scores.append(score) 
+            st.number_input(f"{subcriterion} {i+1}:", min_value=0, max_value=10, value=5, step=1)
         
         st.write("**Social**")
-        social_scores = []
+        social_score = st.number_input(f"Overall Social Score {i+1}:", min_value=0, max_value=10, value=5, step=1)
         for subcriterion in subcriteria['Social']:
-            score = st.number_input(f"{subcriterion} {i+1}:", min_value=0, max_value=10, value=5, step=1)
-            social_scores.append(score)
+            st.number_input(f"{subcriterion} {i+1}:", min_value=0, max_value=10, value=5, step=1)
 
         st.write("**Production**")
-        production_scores = []
+        production_score = st.number_input(f"Overall Production Score {i+1}:", min_value=0, max_value=10, value=5, step=1)
         for subcriterion in subcriteria['Production']:
-            score = st.number_input(f"{subcriterion} {i+1}:", min_value=0, max_value=10, value=5, step=1)
-            production_scores.append(score)
+            st.number_input(f"{subcriterion} {i+1}:", min_value=0, max_value=10, value=5, step=1)
 
-        # Calculando a média das pontuações dos subcritérios para cada categoria
-        economic_score = np.mean(economic_scores) / 10
-        social_score = np.mean(social_scores) / 10
-        production_score = np.mean(production_scores) / 10
-
-        producer_data.append([producer_name, economic_score, social_score, production_score])
+        producer_data.append([producer_name, economic_score/10, social_score/10, production_score/10])
 
     if st.button("Calculate"):
         df_producers = pd.DataFrame(producer_data, columns=['Producer', 'Economic', 'Social', 'Production'])
@@ -156,4 +148,5 @@ elif data_input_method == "Manual entry":
         st.dataframe(df_producers[['Producer', 'Total Score', 'Ranking']])
 
         # Exibir o resultado da verificação de consistência
-        consistency_result = check_consistency(comparison
+        consistency_result = check_consistency(comparison_matrix)
+        st.write(consistency_result)
