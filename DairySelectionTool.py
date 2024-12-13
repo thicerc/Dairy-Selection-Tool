@@ -140,6 +140,20 @@ if data_input_method == "Upload CSV file":
             st.write(consistency_result)
     else:
         st.info("Upload a CSV file to get started.")
+        # --- Adicionando um exemplo de arquivo CSV para download ---
+        example_csv = pd.DataFrame({
+            'Producer': ['Producer A', 'Producer B', 'Producer C'],
+            'Economic': [0.8, 0.9, 0.7],
+            'Social': [0.75, 0.85, 0.65],
+            'Production': [0.9, 0.7, 0.8]
+        })
+        csv_file = example_csv.to_csv(index=False).encode('utf-8')
+        st.download_button(
+            label="Download example CSV",
+            data=csv_file,
+            file_name='example_producer_data.csv',
+            mime='text/csv',
+        )
 
 elif data_input_method == "Manual entry":
     # Entrada manual de dados
