@@ -127,7 +127,7 @@ elif data_input_method == "Manual entry":
 
         scores = []
         for subcriterion in all_subcriteria:
-            score = st.number_input(f"{subcriterion} {i+1}:", min_value=0, max_value=10, value=5, step=1)
+            score = st.number_input(f"{i+1} - {subcriterion}:", min_value=0, max_value=10, value=5, step=1)
             scores.append(score / 10)  # Normalizando para 0-1
 
         # Dividindo as pontuações nas categorias 'Economic', 'Social' e 'Production'
