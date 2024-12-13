@@ -113,3 +113,8 @@ st.write(consistency_result)
 st.header('Producer Scores')
 df = calculate_scores(df)
 st.write('Scores:', df)
+
+# Calculate and display scores
+st.header('Producer Scores')
+df = calculate_scores(df)
+st.write('Scores:', df)
