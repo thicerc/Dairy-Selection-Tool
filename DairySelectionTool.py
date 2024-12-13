@@ -138,9 +138,8 @@ if data_input_method == "Upload CSV file":
             # Exibir o resultado da verificação de consistência
             consistency_result = check_consistency(comparison_matrix)
             st.write(consistency_result)
-  
-         else:
-            st.info("Upload a CSV file to get started.")
+    else:
+        st.info("Upload a CSV file to get started.")
 
 elif data_input_method == "Manual entry":
     # Entrada manual de dados
