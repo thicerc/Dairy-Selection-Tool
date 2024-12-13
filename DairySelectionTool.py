@@ -123,11 +123,22 @@ elif data_input_method == "Manual entry":
         st.write(f"**Producer {i+1}**")
         producer_name = st.text_input(f"Producer Name {i+1}:", value=f"Producer {i+1}")
         
-        # Entrada de dados com as novas legendas
-        economic_score = st.number_input(f"Economic {i+1}:", min_value=0, max_value=10, value=5, step=1)
-        social_score = st.number_input(f"Social {i+1}:", min_value=0, max_value=10, value=5, step=1)
-        production_score = st.number_input(f"Production {i+1}:", min_value=0, max_value=10, value=5, step=1)
+        # Entrada de dados com a nova hierarquia
+        st.write("**Economics**")
+        economic_score = st.number_input(f"Overall Economic Score {i+1}:", min_value=0, max_value=10, value=5, step=1)
+        for subcriterion in subcriteria['Economic']:
+            st.number_input(f"{subcriterion} {i+1}:", min_value=0, max_value=10, value=5, step=1)
         
+        st.write("**Social**")
+        social_score = st.number_input(f"Overall Social Score {i+1}:", min_value=0, max_value=10, value=5, step=1)
+        for subcriterion in subcriteria['Social']:
+            st.number_input(f"{subcriterion} {i+1}:", min_value=0, max_value=10, value=5, step=1)
+
+        st.write("**Production**")
+        production_score = st.number_input(f"Overall Production Score {i+1}:", min_value=0, max_value=10, value=5, step=1)
+        for subcriterion in subcriteria['Production']:
+            st.number_input(f"{subcriterion} {i+1}:", min_value=0, max_value=10, value=5, step=1)
+
         producer_data.append([producer_name, economic_score/10, social_score/10, production_score/10])
 
     if st.button("Calculate"):
@@ -137,5 +148,4 @@ elif data_input_method == "Manual entry":
         st.dataframe(df_producers[['Producer', 'Total Score', 'Ranking']])
 
         # Exibir o resultado da verificação de consistência
-        consistency_result = check_consistency(comparison_matrix)
-        st.write(consistency_result)
+        consistency
