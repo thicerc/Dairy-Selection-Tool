@@ -55,6 +55,21 @@ def get_ri(n):
     ri_dict = {1: 0.00, 2: 0.00, 3: 0.58, 4: 0.90, 5: 1.12, 6: 1.24, 7: 1.32, 8: 1.41, 9: 1.45, 10: 1.49}
     return ri_dict.get(n, 1.49)  # Default for 10 criteria or more
 
+# Function to create example file
+def create_example_file():
+    num_producers = 100
+    producers = [f"Producer {i+1}" for i in range(num_producers)]
+    data = {
+        'Producer': producers
+    }
+
+    for subcriterion in normalized_weights.keys():
+        data[subcriterion] = np.random.randint(0, 11, size=num_producers)
+
+    example_df = pd.DataFrame(data)
+    example_df.to_csv("example_input.csv", index=False)
+    return "example_input.csv"
+
 # Function to get user input for scores
 def get_user_input():
     data = []
@@ -133,6 +148,17 @@ def display_results(data):
 
 def main():
     st.title("Dairy Selection Tool")
+
+    # Provide example file download
+    example_file = create_example_file()
+    with open(example_file, "rb") as file:
+        st.download_button(
+            label="Download Example Input File",
+            data=file,
+            file_name="example_input.csv",
+            mime="text/csv"
+        )
+
     data = get_user_input()
     if st.button("Calculate AHP"):
         display_results(data)
