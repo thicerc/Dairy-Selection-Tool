@@ -61,56 +61,50 @@ comparison_matrix = np.array([
     [1.17161716, 1.10764431, 1.02749638, 1.21783877, 0.89420655, 0.6710775, 0.97796143, 0.95687332, 0.79152731, 1.27240143, 0.92689295, 1.0906298, 1.2283737, 1.0]
 ])
 
-# Passo 1: Calcular o maior valor próprio (λ_max)
-# Para isso, calculamos o autovetor da matriz e depois encontramos a maior razão entre a multiplicação da matriz e o vetor.
-eigenvalues, _ = np.linalg.eig(comparison_matrix)
-lambda_max = max(eigenvalues)
+# Função para calcular a consistência da matriz
+def check_consistency(matrix):
+    eigenvalues, _ = np.linalg.eig(matrix)
+    lambda_max = max(eigenvalues)
+    n = matrix.shape[0]
+    CI = (lambda_max - n) / (n - 1)
+    RI_values = {1: 0.0, 2: 0.0, 3: 0.58, 4: 0.90, 5: 1.12, 6: 1.24, 7: 1.32, 8: 1.41, 9: 1.45, 10: 1.49, 11: 1.51, 12: 1.54, 13: 1.56, 14: 1.59}
+    RI = RI_values[n]
+    CR = CI / RI
+    if CR < 0.1:
+        return f"The Consistency Ratio is acceptable: {CR:.4f}"
+    else:
+        return f"The Consistency Ratio is not acceptable: {CR:.4f}"
 
-# Passo 2: Calcular o Índice de Consistência (CI)
-n = comparison_matrix.shape[0]  # Número de critérios
-CI = (lambda_max - n) / (n - 1)
+# Função para calcular a pontuação total dos produtores
+def calculate_scores(df):
+    df['Economic Score'] = df['Economic'] * sum([normalized_weights[subcriteria_group] for subcriteria_group in subcriteria['Economic']])
+    df['Social Score'] = df['Social'] * sum([normalized_weights[subcriteria_group] for subcriteria_group in subcriteria['Social']])
+    df['Production Score'] = df['Production'] * sum([normalized_weights[subcriteria_group] for subcriteria_group in subcriteria['Production']])
+    df['Total Score'] = df['Economic Score'] + df['Social Score'] + df['Production Score']
+    df['Ranking'] = df['Total Score'].rank(ascending=False)
+    return df
 
-# Passo 3: Calcular o Índice de Consistência Aleatória (RI) para n = 14 (tamanho da matriz)
-RI_values = {1: 0.0, 2: 0.0, 3: 0.58, 4: 0.90, 5: 1.12, 6: 1.24, 7: 1.32, 8: 1.41, 9: 1.45, 10: 1.49, 11: 1.51, 12: 1.54, 13: 1.56, 14: 1.59}
-RI = RI_values[n]
+# Interface Streamlit
+st.title("AHP for Milk Producer Evaluation")
 
-# Passo 4: Calcular o Ratio de Consistência (CR)
-CR = CI / RI
+# Upload de arquivo CSV
+uploaded_file = st.file_uploader("Upload producer data (CSV)", type="csv")
 
-# Passo 5: Verificar a Consistência
-if CR < 0.1:
-    consistency_result = f"The Consistency Ratio is acceptable: {CR:.4f}"
+if uploaded_file is not None:
+    df_producers = pd.read_csv(uploaded_file)
+
+    # Verificar se as colunas necessárias existem no DataFrame
+    required_columns = ['Producer', 'Economic', 'Social', 'Production']
+    if not all(col in df_producers.columns for col in required_columns):
+        st.error(f"CSV file must contain these columns: {required_columns}")
+    else:
+        # Calcular e exibir resultados
+        df_producers = calculate_scores(df_producers)
+        st.write("AHP Results:")
+        st.dataframe(df_producers[['Producer', 'Total Score', 'Ranking']])
+
+        # Exibir o resultado da verificação de consistência
+        consistency_result = check_consistency(comparison_matrix)
+        st.write(consistency_result)
 else:
-    consistency_result = f"The Consistency Ratio is not acceptable: {CR:.4f}"
-
-# Passo 6: Cálculo das pontuações ponderadas dos produtores
-# Aqui os dados seriam inseridos pelos usuários manualmente ou por upload de arquivo
-
-# Exemplo de input de dados dos produtores
-# Substitua isso com o upload de arquivo ou input manual via streamlit
-producer_data = {
-    'Producer': ['Producer A', 'Producer B', 'Producer C'],
-    'Economic': [0.8, 0.9, 0.7],
-    'Social': [0.75, 0.85, 0.65],
-    'Production': [0.9, 0.7, 0.8]
-}
-
-# Criação do DataFrame
-df_producers = pd.DataFrame(producer_data)
-
-# Cálculo da pontuação ponderada
-df_producers['Economic Score'] = df_producers['Economic'] * sum([normalized_weights[subcriteria_group] for subcriteria_group in subcriteria['Economic']])
-df_producers['Social Score'] = df_producers['Social'] * sum([normalized_weights[subcriteria_group] for subcriteria_group in subcriteria['Social']])
-df_producers['Production Score'] = df_producers['Production'] * sum([normalized_weights[subcriteria_group] for subcriteria_group in subcriteria['Production']])
-
-df_producers['Total Score'] = df_producers['Economic Score'] + df_producers['Social Score'] + df_producers['Production Score']
-
-# Ordenar os produtores com base na pontuação total
-df_producers['Ranking'] = df_producers['Total Score'].rank(ascending=False)
-
-# Exibir os resultados
-st.write("AHP Results:")
-st.dataframe(df_producers[['Producer', 'Total Score', 'Ranking']])
-
-# Exibir o resultado da verificação de consistência
-st.write(consistency_result)
+    st.info("Upload a CSV file to get started.")
