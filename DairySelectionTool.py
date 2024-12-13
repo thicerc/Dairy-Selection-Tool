@@ -118,17 +118,29 @@ elif data_input_method == "Manual entry":
     st.subheader("Enter Producer Data:")
     num_producers = st.number_input("Number of producers:", min_value=1, value=1, step=1)
 
+    all_subcriteria = [sub for criterion in subcriteria.values() for sub in criterion]  # Lista com todos os subcritérios
+
     producer_data = []
     for i in range(num_producers):
         st.write(f"**Producer {i+1}**")
         producer_name = st.text_input(f"Producer Name {i+1}:", value=f"Producer {i+1}")
-        
-        # Entrada de dados com as novas legendas
-        economic_score = st.number_input(f"Economic {i+1}:", min_value=0, max_value=10, value=5, step=1)
-        social_score = st.number_input(f"Social {i+1}:", min_value=0, max_value=10, value=5, step=1)
-        production_score = st.number_input(f"Production {i+1}:", min_value=0, max_value=10, value=5, step=1)
-        
-        producer_data.append([producer_name, economic_score/10, social_score/10, production_score/10])
+
+        scores = []
+        for subcriterion in all_subcriteria:
+            score = st.number_input(f"{subcriterion} {i+1}:", min_value=0, max_value=10, value=5, step=1)
+            scores.append(score / 10)  # Normalizando para 0-1
+
+        # Dividindo as pontuações nas categorias 'Economic', 'Social' e 'Production'
+        economic_scores = scores[:len(subcriteria['Economic'])]
+        social_scores = scores[len(subcriteria['Economic']):len(subcriteria['Economic']) + len(subcriteria['Social'])]
+        production_scores = scores[len(subcriteria['Economic']) + len(subcriteria['Social']):]
+
+        # Calculando a média das pontuações dos subcritérios para cada categoria
+        economic_score = np.mean(economic_scores)
+        social_score = np.mean(social_scores)
+        production_score = np.mean(production_scores)
+
+        producer_data.append([producer_name, economic_score, social_score, production_score])
 
     if st.button("Calculate"):
         df_producers = pd.DataFrame(producer_data, columns=['Producer', 'Economic', 'Social', 'Production'])
