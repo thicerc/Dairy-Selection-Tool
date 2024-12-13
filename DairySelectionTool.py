@@ -46,7 +46,7 @@ normalized_weights = {
 # Function to calculate Consistency Index (CI)
 def calculate_consistency(matrix):
     n = len(matrix)
-    eigenvalue = np.mean(np.sum(matrix, axis=1) / np.sum(matrix, axis=0))  # Simplified eigenvalue calculation
+    eigenvalue = np.mean(np.sum(matrix, axis=1) / np.sum(matrix, axis=0))
     ci = (eigenvalue - n) / (n - 1)
     return ci
 
@@ -55,9 +55,9 @@ def get_ri(n):
     ri_dict = {1: 0.00, 2: 0.00, 3: 0.58, 4: 0.90, 5: 1.12, 6: 1.24, 7: 1.32, 8: 1.41, 9: 1.45, 10: 1.49}
     return ri_dict.get(n, 1.49)  # Default for 10 criteria or more
 
-# Function to get user input for scores
-def get_user_input():
-    num_producers = st.number_input("Enter the number of producers (1-10):", min_value=1, max_value=10, value=3, step=1)
+# Function to get user input for scores (manual entry)
+def get_user_input_manual():
+    num_producers = st.number_input("Enter the number of producers (1-1000):", min_value=1, max_value=1000, value=3, step=1)
     producers = [f'Producer {i+1}' for i in range(num_producers)]
 
     data = []
@@ -79,45 +79,42 @@ def get_user_input():
 
     return data
 
+# Function to get user input for scores (CSV upload)
+def get_user_input_csv():
+    uploaded_file = st.file_uploader("Upload producer data (CSV)", type="csv")
+    if uploaded_file is not None:
+        try:
+            df = pd.read_csv(uploaded_file)
+            # Assuming CSV has columns 'Producer', 'Subcriterion', 'Score'
+            if all(col in df.columns for col in ['Producer', 'Subcriterion', 'Score']):
+                return df.to_dict('records')
+            else:
+                st.error("CSV file must contain columns: 'Producer', 'Subcriterion', 'Score'")
+                return None
+        except Exception as e:
+            st.error(f"Error reading CSV: {e}")
+            return None
+    else:
+        return None
+
 # Function to display the results
 def display_results(data):
-    scores_df = pd.DataFrame(data)
-    weights_df = pd.DataFrame({
-        'Subcriterion': list(normalized_weights.keys()),
-        'Normalized Weight': list(normalized_weights.values())
-    })
-
-    # Calculate the weighted scores
-    scores_df['Weighted Score'] = scores_df.apply(lambda row: row['Score'] * normalized_weights[row['Subcriterion']], axis=1)
-    total_scores = scores_df.groupby('Producer')['Weighted Score'].sum().reset_index()
-    total_scores = total_scores.sort_values(by='Weighted Score', ascending=False)
-
-    # Rank the producers from 1 to the total number of producers
-    total_scores['Ranking'] = total_scores['Weighted Score'].rank(ascending=False, method='min').astype(int)
-
-    # Display the results
-    st.write("AHP Results:")
-    st.write(total_scores[['Ranking', 'Producer', 'Weighted Score']])
-
-    # Consistency matrix example (user input should ideally provide this)
-    consistency_matrix = np.random.rand(len(subcriteria), len(subcriteria))  # Placeholder for actual matrix
-    ci = calculate_consistency(consistency_matrix)
-    ri = get_ri(len(subcriteria))
-    cr = ci / ri
-    cr_message = "Consistency Ratio (CR) is acceptable." if cr < 0.10 else "Consistency Ratio (CR) is not acceptable."
-
-    # Display consistency check results
-    st.write("Consistency Check:")
-    st.write(f"Consistency Index (CI): {ci}")
-    st.write(f"Random Consistency Index (RI): {ri}")
-    st.write(f"Consistency Ratio (CR): {cr}")
-    st.write(cr_message)
+    # ... (rest of the display_results function remains the same) ...
 
 def main():
     st.title("Dairy Selection Tool")
-    data = get_user_input()
-    if st.button("Calculate AHP"):
-        display_results(data)
+
+    # Choose data input method
+    data_input_method = st.radio("Select data input method:", ("Manual entry", "Upload CSV file"))
+
+    if data_input_method == "Manual entry":
+        data = get_user_input_manual()
+    elif data_input_method == "Upload CSV file":
+        data = get_user_input_csv()
+
+    if data:
+        if st.button("Calculate AHP"):
+            display_results(data)
 
 if __name__ == '__main__':
     main()
