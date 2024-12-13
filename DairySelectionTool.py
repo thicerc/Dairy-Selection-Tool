@@ -61,11 +61,13 @@ def get_user_input():
     producers = [f'Producer {i+1}' for i in range(num_producers)]
 
     data = []
-    for criterion, subs in subcriteria.items():
-        for sub in subs:
-            for producer in producers:
+    for producer in producers:
+        st.header(f"Input data for {producer}")
+        for criterion, subs in subcriteria.items():
+            st.subheader(criterion)
+            for sub in subs:
                 score = st.number_input(
-                    f"Enter score for {producer} - {sub}:",
+                    f"{sub}:",
                     min_value=0, max_value=10, value=5, step=1, format="%d"
                 )
                 data.append({
