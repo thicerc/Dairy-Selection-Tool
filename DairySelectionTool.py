@@ -1,8 +1,8 @@
-import pandas as pd 
+import pandas as pd
 import numpy as np
 import streamlit as st
 
-# Define the sub-criteria and normalized weights
+# Define os subcritérios e os pesos normalizados
 subcriteria = {
     'Economic': [
         'Accessibility of financial resources',
@@ -43,9 +43,7 @@ normalized_weights = {
     'Economic viability of collection for different volumes': 0.0710
 }
 
-import numpy as np
-
-# Pairwise comparison matrix provided
+# Matriz de comparação par-a-par fornecida
 comparison_matrix = np.array([
     [1.0, 0.94539782, 0.87698987, 1.03945111, 0.76322418, 0.57277883, 0.83471074, 0.81671159, 0.67558528, 1.08602151, 0.79112272, 0.93087558, 1.04844291, 0.85352113],
     [1.05775578, 1.0, 0.9276411, 1.09948542, 0.80730479, 0.60586011, 0.88292011, 0.8638814, 0.71460424, 1.14874552, 0.83681462, 0.98463902, 1.10899654, 0.9028169],
@@ -63,143 +61,56 @@ comparison_matrix = np.array([
     [1.17161716, 1.10764431, 1.02749638, 1.21783877, 0.89420655, 0.6710775, 0.97796143, 0.95687332, 0.79152731, 1.27240143, 0.92689295, 1.0906298, 1.2283737, 1.0]
 ])
 
-# Step 1: Calculate the largest eigenvalue (λ_max)
-# To do this, we calculate the eigenvector of the matrix and then find the largest ratio between the matrix-vector multiplication and the vector itself.
+# Passo 1: Calcular o maior valor próprio (λ_max)
+# Para isso, calculamos o autovetor da matriz e depois encontramos a maior razão entre a multiplicação da matriz e o vetor.
 eigenvalues, _ = np.linalg.eig(comparison_matrix)
 lambda_max = max(eigenvalues)
 
-# Step 2: Calculate the Consistency Index (CI)
-n = comparison_matrix.shape[0]  # Number of criteria
+# Passo 2: Calcular o Índice de Consistência (CI)
+n = comparison_matrix.shape[0]  # Número de critérios
 CI = (lambda_max - n) / (n - 1)
 
-# Step 3: Calculate the Random Consistency Index (RI) for n = 14 (matrix size)
-# RI values based on AHP tables for matrices of size 14
-RI_values = {1: 0.0, 2: 0.0, 3: 0.58, 4: 0.90, 5: 1.12, 6: 1.24, 7: 1.32, 8: 1.41, 9: 1.45, 10: 1.49, 11: 1.51, 12: 1.54, 13: 1.56, 14: 1.57}
-RI = RI_values[n]  # For n=14, the RI is 1.57
+# Passo 3: Calcular o Índice de Consistência Aleatória (RI) para n = 14 (tamanho da matriz)
+RI_values = {1: 0.0, 2: 0.0, 3: 0.58, 4: 0.90, 5: 1.12, 6: 1.24, 7: 1.32, 8: 1.41, 9: 1.45, 10: 1.49, 11: 1.51, 12: 1.54, 13: 1.56, 14: 1.59}
+RI = RI_values[n]
 
-# Step 4: Calculate the Consistency Ratio (CR)
+# Passo 4: Calcular o Ratio de Consistência (CR)
 CR = CI / RI
 
-# Step 5: Display the results
-print(f'Largest eigenvalue (λ_max): {lambda_max}')
-print(f'Consistency Index (CI): {CI}')
-print(f'Random Consistency Index (RI): {RI}')
-print(f'Consistency Ratio (CR): {CR}')
-
-# Check if the CR is acceptable
+# Passo 5: Verificar a Consistência
 if CR < 0.1:
-    print("The Consistency Ratio is acceptable.")
+    consistency_result = f"The Consistency Ratio is acceptable: {CR:.4f}"
 else:
-    print("The Consistency Ratio is not acceptable.")
+    consistency_result = f"The Consistency Ratio is not acceptable: {CR:.4f}"
 
+# Passo 6: Cálculo das pontuações ponderadas dos produtores
+# Aqui os dados seriam inseridos pelos usuários manualmente ou por upload de arquivo
 
-# Function to create example file
-def create_example_file():
-    num_producers = 100
-    producers = [f"Producer {i+1}" for i in range(num_producers)]
-    data = {
-        'Producer': producers
-    }
+# Exemplo de input de dados dos produtores
+# Substitua isso com o upload de arquivo ou input manual via streamlit
+producer_data = {
+    'Producer': ['Producer A', 'Producer B', 'Producer C'],
+    'Economic': [0.8, 0.9, 0.7],
+    'Social': [0.75, 0.85, 0.65],
+    'Production': [0.9, 0.7, 0.8]
+}
 
-    for subcriterion in normalized_weights.keys():
-        data[subcriterion] = np.random.randint(0, 11, size=num_producers)
+# Criação do DataFrame
+df_producers = pd.DataFrame(producer_data)
 
-    example_df = pd.DataFrame(data)
-    example_df.to_csv("example_input.csv", index=False)
-    return "example_input.csv"
+# Cálculo da pontuação ponderada
+df_producers['Economic Score'] = df_producers['Economic'] * sum([normalized_weights[subcriteria_group] for subcriteria_group in subcriteria['Economic']])
+df_producers['Social Score'] = df_producers['Social'] * sum([normalized_weights[subcriteria_group] for subcriteria_group in subcriteria['Social']])
+df_producers['Production Score'] = df_producers['Production'] * sum([normalized_weights[subcriteria_group] for subcriteria_group in subcriteria['Production']])
 
-# Function to get user input for scores
-def get_user_input():
-    data = []
-    upload_file = st.file_uploader("Upload producer data (CSV or Excel):", type=["csv", "xlsx"])
+df_producers['Total Score'] = df_producers['Economic Score'] + df_producers['Social Score'] + df_producers['Production Score']
 
-    if upload_file:
-        # Process uploaded file
-        if upload_file.name.endswith('.csv'):
-            uploaded_data = pd.read_csv(upload_file)
-        else:
-            uploaded_data = pd.read_excel(upload_file)
+# Ordenar os produtores com base na pontuação total
+df_producers['Ranking'] = df_producers['Total Score'].rank(ascending=False)
 
-        for index, row in uploaded_data.iterrows():
-            for subcriterion in normalized_weights.keys():
-                data.append({
-                    'Producer': row['Producer'],
-                    'Subcriterion': subcriterion,
-                    'Score': row[subcriterion]
-                })
-    else:
-        # Manual input
-        num_producers = st.number_input("Enter the number of producers (1-1000):", min_value=1, max_value=1000, value=3, step=1)
-        producers = [f'Producer {i+1}' for i in range(num_producers)]
+# Exibir os resultados
+st.write("AHP Results:")
+st.dataframe(df_producers[['Producer', 'Total Score', 'Ranking']])
 
-        for producer_idx, producer in enumerate(producers):
-            st.header(f"Input data for {producer}")
-            for criterion, subs in subcriteria.items():
-                st.subheader(criterion)
-                for sub_idx, sub in enumerate(subs):
-                    score = st.number_input(
-                        f"{sub}:",
-                        min_value=0, max_value=10, value=5, step=1, format="%d",
-                        key=f"{producer_idx}_{criterion}_{sub_idx}"
-                    )
-                    data.append({
-                        'Producer': producer,
-                        'Subcriterion': sub,
-                        'Score': score
-                    })
-
-    return data
-
-# Function to display the results
-def display_results(data):
-    scores_df = pd.DataFrame(data)
-    weights_df = pd.DataFrame({
-        'Subcriterion': list(normalized_weights.keys()),
-        'Normalized Weight': list(normalized_weights.values())
-    })
-
-    # Calculate the weighted scores
-    scores_df['Weighted Score'] = scores_df.apply(lambda row: row['Score'] * normalized_weights[row['Subcriterion']], axis=1)
-    total_scores = scores_df.groupby('Producer')['Weighted Score'].sum().reset_index()
-    total_scores = total_scores.sort_values(by='Weighted Score', ascending=False)
-
-    # Rank the producers from 1 to the total number of producers
-    total_scores['Ranking'] = total_scores['Weighted Score'].rank(ascending=False, method='min').astype(int)
-
-    # Display the results
-    st.write("AHP Results:")
-    st.write(total_scores[['Ranking', 'Producer', 'Weighted Score']])
-
-    # Consistency matrix example (user input should ideally provide this)
-    consistency_matrix = np.random.rand(len(subcriteria), len(subcriteria))  # Placeholder for actual matrix
-    ci = calculate_consistency(consistency_matrix)
-    ri = get_ri(len(subcriteria))
-    cr = ci / ri
-    cr_message = "Consistency Ratio (CR) is acceptable." if cr < 0.10 else "Consistency Ratio (CR) is not acceptable."
-
-    # Display consistency check results
-    st.write("Consistency Check:")
-    st.write(f"Consistency Index (CI): {ci}")
-    st.write(f"Random Consistency Index (RI): {ri}")
-    st.write(f"Consistency Ratio (CR): {cr}")
-    st.write(cr_message)
-
-def main():
-    st.title("Dairy Selection Tool")
-
-    # Provide example file download
-    example_file = create_example_file()
-    with open(example_file, "rb") as file:
-        st.download_button(
-            label="Download Example Input File",
-            data=file,
-            file_name="example_input.csv",
-            mime="text/csv"
-        )
-
-    data = get_user_input()
-    if st.button("Calculate AHP"):
-        display_results(data)
-
-if __name__ == '__main__':
-    main()
+# Exibir o resultado da verificação de consistência
+st.write(consistency_result)
