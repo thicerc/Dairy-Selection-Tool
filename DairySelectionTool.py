@@ -85,7 +85,7 @@ def calculate_scores(df):
     return df
 
 # Interface Streamlit
-st.title("AHP for Milk Producer Evaluation")
+st.title("Dairy Selection Tool")
 
 # Opções para inserir dados: upload de arquivo ou entrada manual
 data_input_method = st.radio("Select data input method:", ("Upload CSV file", "Manual entry"))
@@ -130,7 +130,7 @@ elif data_input_method == "Manual entry":
         
         producer_data.append([producer_name, economic_score/10, social_score/10, production_score/10])
 
-    if st.button("Calculate"):
+    if st.button("Ranking"):
         df_producers = pd.DataFrame(producer_data, columns=['Producer', 'Economic', 'Social', 'Production'])
         df_producers = calculate_scores(df_producers)
         st.write("AHP Results:")
