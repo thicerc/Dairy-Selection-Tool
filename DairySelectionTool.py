@@ -124,11 +124,11 @@ elif data_input_method == "Manual entry":
         producer_name = st.text_input(f"Producer Name {i+1}:", value=f"Producer {i+1}")
         
         # Entrada de dados com nomes dos critérios nas legendas
-        economic_score = st.number_input(f"Economic Score (min_value=0, max_value=10, value=5, step=1)
-        social_score = st.number_input(f"Social Score (min_value=0, max_value=10, value=5, step=1)
-        production_score = st.number_input(f"Production Score (min_value=0, max_value=10, value=5, step=1)
-        
-        producer_data.append([producer_name, economic_score/10, social_score/10, production_score/10])
+economic_score = st.number_input("Economic Score", min_value=0, max_value=10, value=5, step=1)
+social_score = st.number_input("Social Score", min_value=0, max_value=10, value=5, step=1)
+production_score = st.number_input("Production Score", min_value=0, max_value=10, value=5, step=1)
+
+producer_data.append([producer_name, economic_score / 10, social_score / 10, production_score / 10])
 
     if st.button("Calculate"):
         df_producers = pd.DataFrame(producer_data, columns=['Producer', 'Economic', 'Social', 'Production'])
