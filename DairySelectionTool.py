@@ -61,7 +61,7 @@ comparison_matrix = np.array([
     [1.17161716, 1.10764431, 1.02749638, 1.21783877, 0.89420655, 0.6710775, 0.97796143, 0.95687332, 0.79152731, 1.27240143, 0.92689295, 1.0906298, 1.2283737, 1.0]
 ])
 
-# Função para calcular a consistência da matriz (com nomes em inglês britânico)
+# Função para calcular a consistência da matriz
 def check_consistency(matrix):
     eigenvalues, _ = np.linalg.eig(matrix)
     lambda_max = max(eigenvalues)
@@ -91,13 +91,22 @@ def check_consistency(matrix):
     else:
         st.write("The Consistency Ratio is not acceptable.")
 
-# Função para calcular a pontuação total dos produtores
+# Função para calcular a pontuação total dos produtores com ranking inteiro e sem repetições
 def calculate_scores(df):
-    df['Economic Score'] = df['Economic'] * sum([normalized_weights[subcriteria_group] for subcriteria_group in subcriteria['Economic']])
-    df['Social Score'] = df['Social'] * sum([normalized_weights[subcriteria_group] for subcriteria_group in subcriteria['Social']])
-    df['Production Score'] = df['Production'] * sum([normalized_weights[subcriteria_group] for subcriteria_group in subcriteria['Production']])
-    df['Total Score'] = df['Economic Score'] + df['Social Score'] + df['Production Score']
-    df['Ranking'] = df['Total Score'].rank(ascending=False)
+    # ... (cálculo das pontuações igual) ...
+
+    # Criar uma coluna temporária com o índice original do produtor
+    df['OriginalIndex'] = df.index
+
+    # Ordenar o DataFrame pela pontuação total e, em caso de empate, pelo índice original
+    df = df.sort_values(by=['Total Score', 'OriginalIndex'], ascending=[False, True])
+
+    # Atribuir ranking inteiro e sem repetições
+    df['Ranking'] = range(1, len(df) + 1)
+
+    # Remover a coluna temporária
+    df = df.drop(columns=['OriginalIndex'])
+
     return df
 
 # Interface Streamlit
