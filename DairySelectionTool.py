@@ -130,10 +130,10 @@ elif data_input_method == "Manual entry":
         
         producer_data.append([producer_name, economic_score/10, social_score/10, production_score/10])
 
-    if st.button("Ranking"):
+    if st.button("Calculate AHP"):
         df_producers = pd.DataFrame(producer_data, columns=['Producer', 'Economic', 'Social', 'Production'])
         df_producers = calculate_scores(df_producers)
-        st.write("AHP Results:")
+        st.write("Ranking:")
         st.dataframe(df_producers[['Producer', 'Total Score', 'Ranking']])
 
         # Exibir o resultado da verificação de consistência
