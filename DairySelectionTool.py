@@ -52,7 +52,7 @@ def calculate_consistency(matrix):
 
 # Function to calculate Random Consistency Index (RI)
 def get_ri(n):
-    ri_dict = {1: 0.00, 2: 0.00, 3: 0.58, 4: 0.90, 5: 1.12, 6: 1.24, 7: 1.32, 8: 1.41, 9: 1.45, 10: 1.49}
+    ri_dict = {1: 0.00, 2: 0.00, 3: 0.58, 4: 0.90, 5: 1.12, 6: 1.24, 7: 1.32, 8: 1.41, 9: 1.45, 10: 1.49, 14: 1.49}
     return ri_dict.get(n, 1.49)  # Default for 10 criteria or more
 
 # Function to create example file
@@ -132,10 +132,19 @@ def display_results(data):
     st.write("AHP Results:")
     st.write(total_scores[['Ranking', 'Producer', 'Weighted Score']])
 
-    # Consistency matrix example (user input should ideally provide this)
-    consistency_matrix = np.random.rand(len(subcriteria), len(subcriteria))  # Placeholder for actual matrix
-    ci = calculate_consistency(consistency_matrix)
-    ri = get_ri(len(subcriteria))
+    # Create and display the consistency matrix
+    n = len(normalized_weights)
+    comparison_matrix = np.ones((n, n))
+
+    # Populate the matrix using the normalized weights
+    for i in range(n):
+        for j in range(n):
+            if i != j:
+                comparison_matrix[i, j] = normalized_weights[list(normalized_weights.keys())[i]] / normalized_weights[list(normalized_weights.keys())[j]]
+
+    # Calculate consistency
+    ci = calculate_consistency(comparison_matrix)
+    ri = get_ri(len(normalized_weights))
     cr = ci / ri
     cr_message = "Consistency Ratio (CR) is acceptable." if cr < 0.10 else "Consistency Ratio (CR) is not acceptable."
 
@@ -165,4 +174,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
