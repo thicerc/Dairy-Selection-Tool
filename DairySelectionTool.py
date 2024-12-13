@@ -1,4 +1,4 @@
-import pandas as pd
+import pandas as pd 
 import numpy as np
 import streamlit as st
 
@@ -57,14 +57,17 @@ def get_ri(n):
 
 # Function to get user input for scores
 def get_user_input():
-    num_producers = st.number_input("Enter the number of producers (1-10):", min_value=1, max_value=10, value=3)
+    num_producers = st.number_input("Enter the number of producers (1-10):", min_value=1, max_value=10, value=3, step=1)
     producers = [f'Producer {i+1}' for i in range(num_producers)]
 
     data = []
     for criterion, subs in subcriteria.items():
         for sub in subs:
             for producer in producers:
-                score = st.number_input(f"Enter score for {producer} - {sub}:")
+                score = st.number_input(
+                    f"Enter score for {producer} - {sub}:",
+                    min_value=0, max_value=10, value=5, step=1, format="%d"
+                )
                 data.append({
                     'Producer': producer,
                     'Subcriterion': sub,
