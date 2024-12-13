@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 import streamlit as st
 
-# Define os subcritérios e os pesos normalizados
+# Define the sub-criteria and normalized weights
 subcriteria = {
     'Economic': [
         'Accessibility of financial resources',
@@ -43,7 +43,7 @@ normalized_weights = {
     'Economic viability of collection for different volumes': 0.0710
 }
 
-# Matriz de comparação par-a-par fornecida
+# Pairwise comparison matrix provided
 comparison_matrix = np.array([
     [1.0, 0.94539782, 0.87698987, 1.03945111, 0.76322418, 0.57277883, 0.83471074, 0.81671159, 0.67558528, 1.08602151, 0.79112272, 0.93087558, 1.04844291, 0.85352113],
     [1.05775578, 1.0, 0.9276411, 1.09948542, 0.80730479, 0.60586011, 0.88292011, 0.8638814, 0.71460424, 1.14874552, 0.83681462, 0.98463902, 1.10899654, 0.9028169],
@@ -61,19 +61,35 @@ comparison_matrix = np.array([
     [1.17161716, 1.10764431, 1.02749638, 1.21783877, 0.89420655, 0.6710775, 0.97796143, 0.95687332, 0.79152731, 1.27240143, 0.92689295, 1.0906298, 1.2283737, 1.0]
 ])
 
-# Função para calcular a consistência da matriz
-def check_consistency(matrix):
-    eigenvalues, _ = np.linalg.eig(matrix)
-    lambda_max = max(eigenvalues)
-    n = matrix.shape[0]
-    CI = (lambda_max - n) / (n - 1)
-    RI_values = {1: 0.0, 2: 0.0, 3: 0.58, 4: 0.90, 5: 1.12, 6: 1.24, 7: 1.32, 8: 1.41, 9: 1.45, 10: 1.49, 11: 1.51, 12: 1.54, 13: 1.56, 14: 1.59}
-    RI = RI_values[n]
-    CR = CI / RI
-    if CR < 0.1:
-        return f"The Consistency Ratio is acceptable: {CR:.4f}"
-    else:
-        return f"The Consistency Ratio is not acceptable: {CR:.4f}"
+# Step 1: Calculate the largest eigenvalue (λ_max)
+# To do this, we calculate the eigenvector of the matrix and then find the largest ratio between the matrix-vector multiplication and the vector itself.
+eigenvalues, _ = np.linalg.eig(comparison_matrix)
+lambda_max = max(eigenvalues)
+
+# Step 2: Calculate the Consistency Index (CI)
+n = comparison_matrix.shape[0]  # Number of criteria
+CI = (lambda_max - n) / (n - 1)
+
+# Step 3: Calculate the Random Consistency Index (RI) for n = 14 (matrix size)
+# RI values based on AHP tables for matrices of size 14
+RI_values = {1: 0.0, 2: 0.0, 3: 0.58, 4: 0.90, 5: 1.12, 6: 1.24, 7: 1.32, 8: 1.41, 9: 1.45, 10: 1.49, 11: 1.51, 12: 1.54, 13: 1.56, 14: 1.57}
+RI = RI_values[n]
+
+# Step 4: Calculate the Consistency Ratio (CR)
+CR = CI / RI
+
+# Output results in Streamlit
+st.title("AHP Consistency Check")
+
+st.write(f"Eigenvalue (λ_max): {lambda_max}")
+st.write(f"Consistency Index (CI): {CI}")
+st.write(f"Random Consistency Index (RI): {RI}")
+st.write(f"Consistency Ratio (CR): {CR}")
+
+if CR < 0.10:
+    st.write("The consistency ratio is acceptable (CR < 0.10).")
+else:
+    st.write("The consistency ratio is not acceptable (CR >= 0.10).") 
 
 # Função para calcular a pontuação total dos produtores
 def calculate_scores(df):
