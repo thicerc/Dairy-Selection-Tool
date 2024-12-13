@@ -121,11 +121,11 @@ elif data_input_method == "Manual entry":
     producer_data = []
     for i in range(num_producers):
         st.write(f"**Producer {i+1}**")
-        producer_name = st.text_input(f"Producer Name {i+1}:")
-        economic_score = st.number_input(f"Economic Score {i+1}:", min_value=0.0, max_value=1.0, value=0.5, step=0.1)
-        social_score = st.number_input(f"Social Score {i+1}:", min_value=0.0, max_value=1.0, value=0.5, step=0.1)
-        production_score = st.number_input(f"Production Score {i+1}:", min_value=0.0, max_value=1.0, value=0.5, step=0.1)
-        producer_data.append([producer_name, economic_score, social_score, production_score])
+        producer_name = st.text_input(f"Producer Name {i+1}:", value=f"Producer {i+1}")
+        economic_score = st.number_input(f"Economic Score {i+1}:", min_value=0, max_value=10, value=5, step=1)
+        social_score = st.number_input(f"Social Score {i+1}:", min_value=0, max_value=10, value=5, step=1)
+        production_score = st.number_input(f"Production Score {i+1}:", min_value=0, max_value=10, value=5, step=1)
+        producer_data.append([producer_name, economic_score/10, social_score/10, production_score/10])
 
     if st.button("Calculate"):
         df_producers = pd.DataFrame(producer_data, columns=['Producer', 'Economic', 'Social', 'Production'])
