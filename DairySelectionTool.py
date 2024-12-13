@@ -57,25 +57,43 @@ def get_ri(n):
 
 # Function to get user input for scores
 def get_user_input():
-    num_producers = st.number_input("Enter the number of producers (1-10):", min_value=1, max_value=10, value=3, step=1)
-    producers = [f'Producer {i+1}' for i in range(num_producers)]
-
     data = []
-    for producer_idx, producer in enumerate(producers):
-        st.header(f"Input data for {producer}")
-        for criterion, subs in subcriteria.items():
-            st.subheader(criterion)
-            for sub_idx, sub in enumerate(subs):
-                score = st.number_input(
-                    f"{sub}:",
-                    min_value=0, max_value=10, value=5, step=1, format="%d",
-                    key=f"{producer_idx}_{criterion}_{sub_idx}"
-                )
+    upload_file = st.file_uploader("Upload producer data (CSV or Excel):", type=["csv", "xlsx"])
+
+    if upload_file:
+        # Process uploaded file
+        if upload_file.name.endswith('.csv'):
+            uploaded_data = pd.read_csv(upload_file)
+        else:
+            uploaded_data = pd.read_excel(upload_file)
+
+        for index, row in uploaded_data.iterrows():
+            for subcriterion in normalized_weights.keys():
                 data.append({
-                    'Producer': producer,
-                    'Subcriterion': sub,
-                    'Score': score
+                    'Producer': row['Producer'],
+                    'Subcriterion': subcriterion,
+                    'Score': row[subcriterion]
                 })
+    else:
+        # Manual input
+        num_producers = st.number_input("Enter the number of producers (1-1000):", min_value=1, max_value=1000, value=3, step=1)
+        producers = [f'Producer {i+1}' for i in range(num_producers)]
+
+        for producer_idx, producer in enumerate(producers):
+            st.header(f"Input data for {producer}")
+            for criterion, subs in subcriteria.items():
+                st.subheader(criterion)
+                for sub_idx, sub in enumerate(subs):
+                    score = st.number_input(
+                        f"{sub}:",
+                        min_value=0, max_value=10, value=5, step=1, format="%d",
+                        key=f"{producer_idx}_{criterion}_{sub_idx}"
+                    )
+                    data.append({
+                        'Producer': producer,
+                        'Subcriterion': sub,
+                        'Score': score
+                    })
 
     return data
 
@@ -121,3 +139,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+
