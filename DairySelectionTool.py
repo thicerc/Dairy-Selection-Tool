@@ -61,14 +61,15 @@ def get_user_input():
     producers = [f'Producer {i+1}' for i in range(num_producers)]
 
     data = []
-    for producer in producers:
+    for producer_idx, producer in enumerate(producers):
         st.header(f"Input data for {producer}")
         for criterion, subs in subcriteria.items():
             st.subheader(criterion)
-            for sub in subs:
+            for sub_idx, sub in enumerate(subs):
                 score = st.number_input(
                     f"{sub}:",
-                    min_value=0, max_value=10, value=5, step=1, format="%d"
+                    min_value=0, max_value=10, value=5, step=1, format="%d",
+                    key=f"{producer_idx}_{criterion}_{sub_idx}"
                 )
                 data.append({
                     'Producer': producer,
