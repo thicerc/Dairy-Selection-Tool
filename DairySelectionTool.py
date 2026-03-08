@@ -914,8 +914,8 @@ if st.session_state.results is not None:
                 ),
                 title=dict(
                     text='Radar — Score por Categoria / Category Score Radar',
-                    font=dict(size=13, color='#1a5276'),
-                    x=0.5
+                    font=dict(size=14, color='#1a5276'),
+                    x=0, xanchor='left'
                 ),
                 paper_bgcolor='white',
                 height=420,
