@@ -438,12 +438,15 @@ def to_pdf(df, info):
                    get_t('production'), get_t('total_score')]
     rank_data = [rank_header]
     medal = {1: '🥇', 2: '🥈', 3: '🥉'}
+    prod_style = ParagraphStyle('ProdCell', parent=styles['Normal'],
+        fontSize=9, textColor=colors.HexColor('#1a5276'),
+        fontName='Helvetica-Bold', leading=11, wordWrap='LTR')
     for _, row in df.iterrows():
         r = int(row['Ranking'])
         icon = medal.get(r, str(r))
         rank_data.append([
             icon,
-            row['Producer'],
+            Paragraph(str(row['Producer']), prod_style),
             f"{row['Economic Score']:.4f}",
             f"{row['Social Score']:.4f}",
             f"{row['Production Score']:.4f}",
@@ -498,16 +501,26 @@ def to_pdf(df, info):
     cat_bg = {'Economic': colors.HexColor('#dbeafe'),
               'Social': colors.HexColor('#dcfce7'),
               'Production': colors.HexColor('#fef9c3')}
+
+    sub_style = ParagraphStyle('SubCell', parent=styles['Normal'],
+        fontSize=8.5, textColor=colors.HexColor('#333333'),
+        leading=11, wordWrap='LTR')
+    cat_style = ParagraphStyle('CatCell', parent=styles['Normal'],
+        fontSize=8.5, textColor=colors.HexColor('#1a5276'),
+        fontName='Helvetica-Bold', leading=11)
+
     for cat, subs_en in SUBCRITERIA.items():
         for sub_en, sub_label in zip(subs_en, subs_map[cat]):
             w_data.append([
-                cat_labels_map[cat],
-                sub_label,
+                Paragraph(cat_labels_map[cat], cat_style),
+                Paragraph(sub_label, sub_style),
                 f"{nw[sub_en]:.4f}",
                 f"{nw[sub_en]:.1%}"
             ])
 
-    w_table = Table(w_data, colWidths=[4*cm, 8*cm, 2.5*cm, 2*cm], repeatRows=1)
+    # Total page width usable = A4(595) - margins(4cm) = ~481pt
+    # Distribute: Cat=3.5cm, Sub=9.5cm, Peso=2.5cm, %=2cm
+    w_table = Table(w_data, colWidths=[3.5*cm, 9.5*cm, 2.5*cm, 2*cm], repeatRows=1)
     w_table.setStyle(TableStyle([
         ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#2980b9')),
         ('TEXTCOLOR', (0,0), (-1,0), colors.white),
@@ -811,51 +824,54 @@ if st.session_state.results is not None:
 
     # ── Tab 2: Charts ─────────────────────────────────────────────────────────
     with t2:
-        col1, col2 = st.columns(2)
+        # Bar chart - total scores (full width)
+        fig_bar = px.bar(
+            df.sort_values('Total Score'),
+            x='Total Score', y='Producer', orientation='h',
+            color='Total Score',
+            color_continuous_scale='Blues',
+            title=get_t('total_score'),
+            text='Total Score'
+        )
+        fig_bar.update_traces(texttemplate='%{text:.4f}', textposition='outside')
+        fig_bar.update_layout(
+            plot_bgcolor='white', paper_bgcolor='white',
+            coloraxis_showscale=False,
+            height=max(320, len(df) * 55 + 80),
+            margin=dict(l=10, r=80, t=50, b=20),
+            font=dict(family='Inter'),
+            title=dict(font=dict(size=14, color='#1a5276'), x=0, xanchor='left'),
+            yaxis=dict(tickfont=dict(size=11)),
+        )
+        st.plotly_chart(fig_bar, use_container_width=True)
 
-        with col1:
-            # Bar chart - total scores
-            fig_bar = px.bar(
-                df.sort_values('Total Score'),
-                x='Total Score', y='Producer', orientation='h',
-                color='Total Score',
-                color_continuous_scale='Blues',
-                title=get_t('total_score'),
-                text='Total Score'
-            )
-            fig_bar.update_traces(texttemplate='%{text:.4f}', textposition='outside')
-            fig_bar.update_layout(
-                plot_bgcolor='white', paper_bgcolor='white',
-                coloraxis_showscale=False,
-                height=max(300, len(df) * 50),
-                margin=dict(l=0, r=40, t=40, b=0),
-                font=dict(family='Inter')
-            )
-            st.plotly_chart(fig_bar, use_container_width=True)
-
-        with col2:
-            # Stacked bar
-            fig_stack = go.Figure()
-            colors = ['#2980b9', '#27ae60', '#f39c12']
-            cats = [
-                (get_t('economic'), 'Economic Score'),
-                (get_t('social'), 'Social Score'),
-                (get_t('production'), 'Production Score'),
-            ]
-            for (cat_label, col_name), color in zip(cats, colors):
-                fig_stack.add_trace(go.Bar(
-                    name=cat_label, x=df['Producer'],
-                    y=df[col_name], marker_color=color
-                ))
-            fig_stack.update_layout(
-                barmode='stack', title='Score Breakdown',
-                plot_bgcolor='white', paper_bgcolor='white',
-                height=max(300, len(df) * 50),
-                margin=dict(l=0, r=0, t=40, b=0),
-                font=dict(family='Inter'),
-                legend=dict(orientation='h', yanchor='bottom', y=1.02)
-            )
-            st.plotly_chart(fig_stack, use_container_width=True)
+        # Stacked bar (full width)
+        fig_stack = go.Figure()
+        chart_colors = ['#2980b9', '#27ae60', '#f39c12']
+        cats = [
+            (get_t('economic'), 'Economic Score'),
+            (get_t('social'), 'Social Score'),
+            (get_t('production'), 'Production Score'),
+        ]
+        for (cat_label, col_name), color in zip(cats, chart_colors):
+            fig_stack.add_trace(go.Bar(
+                name=cat_label, x=df['Producer'],
+                y=df[col_name], marker_color=color,
+                hovertemplate='<b>%{x}</b><br>' + cat_label + ': %{y:.4f}<extra></extra>'
+            ))
+        fig_stack.update_layout(
+            barmode='stack',
+            title=dict(text='Score Breakdown por Categoria / by Category',
+                       font=dict(size=14, color='#1a5276'), x=0, xanchor='left'),
+            plot_bgcolor='white', paper_bgcolor='white',
+            height=max(320, len(df) * 55 + 100),
+            margin=dict(l=10, r=10, t=50, b=60),
+            font=dict(family='Inter'),
+            legend=dict(orientation='h', yanchor='top', y=-0.15,
+                       xanchor='center', x=0.5, font=dict(size=11)),
+            xaxis=dict(tickfont=dict(size=11)),
+        )
+        st.plotly_chart(fig_stack, use_container_width=True)
 
         # Radar chart — fixed labels, only show when ≥2 producers
         if len(df) >= 1:
@@ -1018,4 +1034,3 @@ if st.session_state.results is not None:
             except Exception as e:
                 st.warning(f"PDF: instale reportlab. `pip install reportlab`")
         st.dataframe(df, use_container_width=True, hide_index=True)
-
