@@ -165,6 +165,19 @@ LANG = {
         'social_criteria': 'Social Criteria',
         'production_criteria': 'Production Criteria',
         'subcriteria_scores': 'Sub-criteria Scores',
+        'download_pdf': '📄 Download PDF Report',
+        'tutorial_title': 'How to use this tool',
+        'tutorial_skip': 'Start now →',
+        'tut_step1_title': '1. Set Weights',
+        'tut_step1_desc': 'In the sidebar, adjust the importance of each criterion using sliders. Values are automatically normalized.',
+        'tut_step2_title': '2. Enter Producers',
+        'tut_step2_desc': 'Upload a CSV or enter data manually. Rate each producer 0–10 per sub-criterion.',
+        'tut_step3_title': '3. Calculate & Analyze',
+        'tut_step3_desc': 'Click "Calculate Ranking" to see AHP results with charts and consistency analysis.',
+        'tut_step4_title': '4. Export',
+        'tut_step4_desc': 'Download the ranking as Excel, CSV or PDF for sharing and documentation.',
+        'what_is_ahp': 'What is AHP?',
+        'ahp_explanation': 'The Analytic Hierarchy Process (AHP) is a structured decision-making technique that uses pairwise comparisons to rank alternatives based on multiple weighted criteria.',
     },
     'PT': {
         'title': 'Ferramenta de Seleção de Produtores',
@@ -206,6 +219,19 @@ LANG = {
         'social_criteria': 'Critérios Sociais',
         'production_criteria': 'Critérios de Produção',
         'subcriteria_scores': 'Pontuações por Subcritério',
+        'download_pdf': '📄 Baixar Relatório PDF',
+        'tutorial_title': 'Como usar esta ferramenta',
+        'tutorial_skip': 'Começar agora →',
+        'tut_step1_title': '1. Defina os Pesos',
+        'tut_step1_desc': 'Na barra lateral, ajuste a importância de cada critério com os sliders. Os valores são normalizados automaticamente.',
+        'tut_step2_title': '2. Insira os Produtores',
+        'tut_step2_desc': 'Escolha entre enviar um CSV ou inserir manualmente. Avalie cada produtor de 0 a 10 por subcritério.',
+        'tut_step3_title': '3. Calcule e Analise',
+        'tut_step3_desc': 'Clique em "Calcular Ranking" para ver os resultados AHP com gráficos e análise de consistência.',
+        'tut_step4_title': '4. Exporte',
+        'tut_step4_desc': 'Baixe o ranking em Excel, CSV ou PDF para documentação e compartilhamento.',
+        'what_is_ahp': 'O que é AHP?',
+        'ahp_explanation': 'O Processo de Análise Hierárquica (AHP) é uma técnica estruturada de tomada de decisão que usa comparações par-a-par para classificar alternativas com base em múltiplos critérios ponderados.',
     }
 }
 
@@ -339,6 +365,176 @@ def to_excel(df):
     buf.seek(0)
     return buf.getvalue()
 
+def to_pdf(df, info):
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib import colors
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib.units import cm
+    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, HRFlowable
+    from reportlab.lib.enums import TA_CENTER, TA_LEFT
+
+    buf = BytesIO()
+    doc = SimpleDocTemplate(buf, pagesize=A4,
+                            leftMargin=2*cm, rightMargin=2*cm,
+                            topMargin=2*cm, bottomMargin=2*cm)
+    story = []
+    styles = getSampleStyleSheet()
+
+    # Custom styles
+    title_style = ParagraphStyle('Title', parent=styles['Title'],
+        fontSize=22, textColor=colors.HexColor('#1a5276'),
+        spaceAfter=4, alignment=TA_CENTER, fontName='Helvetica-Bold')
+    subtitle_style = ParagraphStyle('Subtitle', parent=styles['Normal'],
+        fontSize=11, textColor=colors.HexColor('#2980b9'),
+        spaceAfter=16, alignment=TA_CENTER)
+    section_style = ParagraphStyle('Section', parent=styles['Heading2'],
+        fontSize=13, textColor=colors.HexColor('#1a5276'),
+        spaceBefore=16, spaceAfter=8, fontName='Helvetica-Bold',
+        borderPad=4)
+    normal_style = ParagraphStyle('Normal2', parent=styles['Normal'],
+        fontSize=10, textColor=colors.HexColor('#333333'), spaceAfter=4)
+    footer_style = ParagraphStyle('Footer', parent=styles['Normal'],
+        fontSize=8, textColor=colors.HexColor('#999999'), alignment=TA_CENTER)
+
+    lang = st.session_state.get('lang', 'PT')
+
+    # ── Header ────────────────────────────────────────────────────────────────
+    story.append(Paragraph("🥛 " + get_t('title'), title_style))
+    story.append(Paragraph(get_t('subtitle'), subtitle_style))
+    story.append(HRFlowable(width="100%", thickness=2,
+                            color=colors.HexColor('#2980b9'), spaceAfter=12))
+
+    # ── Info block ────────────────────────────────────────────────────────────
+    from datetime import datetime
+    date_str = datetime.now().strftime('%d/%m/%Y %H:%M')
+    info_data = [
+        ['📅 Data / Date', date_str],
+        ['👥 Produtores / Producers', str(len(df))],
+        ['🥇 Melhor / Top', df.iloc[0]['Producer']],
+        ['📊 Método / Method', 'AHP — Analytic Hierarchy Process'],
+    ]
+    info_table = Table(info_data, colWidths=[5*cm, 11*cm])
+    info_table.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (0,-1), colors.HexColor('#dbeafe')),
+        ('BACKGROUND', (1,0), (1,-1), colors.HexColor('#f8fafc')),
+        ('TEXTCOLOR', (0,0), (-1,-1), colors.HexColor('#1a5276')),
+        ('FONTNAME', (0,0), (0,-1), 'Helvetica-Bold'),
+        ('FONTSIZE', (0,0), (-1,-1), 10),
+        ('ROWBACKGROUNDS', (0,0), (-1,-1), [colors.HexColor('#f0f7ff'), colors.white]),
+        ('GRID', (0,0), (-1,-1), 0.5, colors.HexColor('#d0e4f7')),
+        ('ROUNDEDCORNERS', [6]),
+        ('TOPPADDING', (0,0), (-1,-1), 7),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 7),
+        ('LEFTPADDING', (0,0), (-1,-1), 10),
+    ]))
+    story.append(info_table)
+    story.append(Spacer(1, 16))
+
+    # ── Ranking section ───────────────────────────────────────────────────────
+    story.append(Paragraph(get_t('results_title'), section_style))
+
+    rank_header = ['#', 'Produtor / Producer',
+                   get_t('economic'), get_t('social'),
+                   get_t('production'), get_t('total_score')]
+    rank_data = [rank_header]
+    medal = {1: '🥇', 2: '🥈', 3: '🥉'}
+    for _, row in df.iterrows():
+        r = int(row['Ranking'])
+        icon = medal.get(r, str(r))
+        rank_data.append([
+            icon,
+            row['Producer'],
+            f"{row['Economic Score']:.4f}",
+            f"{row['Social Score']:.4f}",
+            f"{row['Production Score']:.4f}",
+            f"{row['Total Score']:.4f}",
+        ])
+
+    col_widths = [1.2*cm, 5.5*cm, 2.8*cm, 2.5*cm, 2.8*cm, 3*cm]
+    rank_table = Table(rank_data, colWidths=col_widths, repeatRows=1)
+
+    row_colors = [
+        colors.HexColor('#1a5276'),   # header
+        colors.HexColor('#fff7e6'),   # 1st
+        colors.HexColor('#f0fdf4'),   # 2nd
+        colors.HexColor('#f0fdf4'),   # 3rd
+    ]
+    ts = TableStyle([
+        # Header
+        ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#1a5276')),
+        ('TEXTCOLOR', (0,0), (-1,0), colors.white),
+        ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0,0), (-1,0), 10),
+        ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+        ('TOPPADDING', (0,0), (-1,-1), 7),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 7),
+        ('GRID', (0,0), (-1,-1), 0.5, colors.HexColor('#d0e4f7')),
+        ('ROWBACKGROUNDS', (0,1), (-1,-1),
+         [colors.HexColor('#fffbeb'), colors.HexColor('#f0fdf4'), colors.white]),
+        ('FONTNAME', (0,1), (-1,-1), 'Helvetica'),
+        ('FONTSIZE', (0,1), (-1,-1), 9),
+        ('FONTNAME', (-1,1), (-1,1), 'Helvetica-Bold'),
+        ('TEXTCOLOR', (-1,1), (-1,1), colors.HexColor('#1a5276')),
+    ])
+    rank_table.setStyle(ts)
+    story.append(rank_table)
+    story.append(Spacer(1, 16))
+
+    # ── Weights section ───────────────────────────────────────────────────────
+    story.append(HRFlowable(width="100%", thickness=1,
+                            color=colors.HexColor('#d0e4f7'), spaceAfter=8))
+    w_title = '📊 Pesos dos Critérios / Criterion Weights' if lang == 'PT' else '📊 Criterion Weights'
+    story.append(Paragraph(w_title, section_style))
+
+    nw = normalize_weights(st.session_state.weights)
+    cat_labels_map = {'Economic': get_t('economic'), 'Social': get_t('social'), 'Production': get_t('production')}
+    subs_map = {'Economic': SUBCRITERIA_PT['Economic'] if lang == 'PT' else SUBCRITERIA['Economic'],
+                'Social':   SUBCRITERIA_PT['Social']   if lang == 'PT' else SUBCRITERIA['Social'],
+                'Production': SUBCRITERIA_PT['Production'] if lang == 'PT' else SUBCRITERIA['Production']}
+
+    w_header = ['Categoria / Category', 'Subcritério / Sub-criterion', 'Peso / Weight', '%']
+    w_data = [w_header]
+    cat_bg = {'Economic': colors.HexColor('#dbeafe'),
+              'Social': colors.HexColor('#dcfce7'),
+              'Production': colors.HexColor('#fef9c3')}
+    for cat, subs_en in SUBCRITERIA.items():
+        for sub_en, sub_label in zip(subs_en, subs_map[cat]):
+            w_data.append([
+                cat_labels_map[cat],
+                sub_label,
+                f"{nw[sub_en]:.4f}",
+                f"{nw[sub_en]:.1%}"
+            ])
+
+    w_table = Table(w_data, colWidths=[4*cm, 8*cm, 2.5*cm, 2*cm], repeatRows=1)
+    w_table.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#2980b9')),
+        ('TEXTCOLOR', (0,0), (-1,0), colors.white),
+        ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0,0), (-1,-1), 9),
+        ('ALIGN', (2,0), (-1,-1), 'CENTER'),
+        ('TOPPADDING', (0,0), (-1,-1), 5),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 5),
+        ('LEFTPADDING', (0,0), (-1,-1), 8),
+        ('GRID', (0,0), (-1,-1), 0.3, colors.HexColor('#e0e8f0')),
+        ('ROWBACKGROUNDS', (0,1), (-1,-1), [colors.HexColor('#f8fafc'), colors.white]),
+    ]))
+    story.append(w_table)
+    story.append(Spacer(1, 20))
+
+    # ── Footer ────────────────────────────────────────────────────────────────
+    story.append(HRFlowable(width="100%", thickness=1,
+                            color=colors.HexColor('#d0e4f7'), spaceAfter=6))
+    story.append(Paragraph(
+        f"Dairy Selection Tool | AHP | {date_str}",
+        footer_style
+    ))
+
+    doc.build(story)
+    buf.seek(0)
+    return buf.getvalue()
+
 # ─── SESSION STATE ─────────────────────────────────────────────────────────────
 if 'lang' not in st.session_state:
     st.session_state.lang = 'PT'
@@ -346,6 +542,8 @@ if 'weights' not in st.session_state:
     st.session_state.weights = dict(DEFAULT_WEIGHTS)
 if 'results' not in st.session_state:
     st.session_state.results = None
+if 'show_tutorial' not in st.session_state:
+    st.session_state.show_tutorial = True
 
 # ─── SIDEBAR ──────────────────────────────────────────────────────────────────
 with st.sidebar:
@@ -404,6 +602,58 @@ st.markdown(f"""
     <p>{get_t('subtitle')}</p>
 </div>
 """, unsafe_allow_html=True)
+
+# ─── WELCOME / TUTORIAL ───────────────────────────────────────────────────────
+if st.session_state.show_tutorial:
+    st.markdown(f"""
+    <div style="background:linear-gradient(135deg,#f0f7ff,#e8f5e9);
+                border-radius:16px; padding:2rem; margin-bottom:1.5rem;
+                border:1px solid #c8e0f5;">
+        <h2 style="color:#1a5276;margin:0 0 1rem;font-size:1.4rem;">
+            👋 {get_t('tutorial_title')}
+        </h2>
+    </div>
+    """, unsafe_allow_html=True)
+
+    c1, c2, c3, c4 = st.columns(4)
+    steps = [
+        (c1, "⚙️", get_t('tut_step1_title'), get_t('tut_step1_desc'), "#dbeafe", "#1e40af"),
+        (c2, "✏️", get_t('tut_step2_title'), get_t('tut_step2_desc'), "#dcfce7", "#166534"),
+        (c3, "📊", get_t('tut_step3_title'), get_t('tut_step3_desc'), "#fef9c3", "#854d0e"),
+        (c4, "📤", get_t('tut_step4_title'), get_t('tut_step4_desc'), "#fce7f3", "#9d174d"),
+    ]
+    for col, icon, title, desc, bg, color in steps:
+        col.markdown(f"""
+        <div style="background:{bg}; border-radius:12px; padding:1.2rem;
+                    height:100%; border-left:4px solid {color};">
+            <div style="font-size:1.8rem; margin-bottom:8px">{icon}</div>
+            <div style="font-weight:700; color:{color}; font-size:0.95rem;
+                        margin-bottom:6px">{title}</div>
+            <div style="font-size:0.85rem; color:#444; line-height:1.5">{desc}</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    col_ahp, col_btn = st.columns([3, 1])
+    with col_ahp:
+        with st.expander(f"ℹ️ {get_t('what_is_ahp')}"):
+            st.markdown(f"""
+            <div style="font-size:0.95rem; color:#444; line-height:1.6; padding:0.5rem">
+                {get_t('ahp_explanation')}
+                <br><br>
+                <b>14 subcritérios</b> organizados em 3 categorias:
+                <br>💰 <b>{get_t('economic')}</b> (58,4%) &nbsp;|&nbsp;
+                🤝 <b>{get_t('social')}</b> (22,2%) &nbsp;|&nbsp;
+                🐄 <b>{get_t('production')}</b> (19,4%)
+            </div>
+            """, unsafe_allow_html=True)
+    with col_btn:
+        if st.button(get_t('tutorial_skip'), type='primary', use_container_width=True):
+            st.session_state.show_tutorial = False
+            st.rerun()
+
+    st.markdown("---")
 
 # ─── INPUT SECTION ────────────────────────────────────────────────────────────
 st.markdown(f"### {get_t('input_method')}")
@@ -607,27 +857,60 @@ if st.session_state.results is not None:
             )
             st.plotly_chart(fig_stack, use_container_width=True)
 
-        # Radar chart
-        if len(df) <= 8:
+        # Radar chart — fixed labels, only show when ≥2 producers
+        if len(df) >= 1:
             categories = [get_t('economic'), get_t('social'), get_t('production')]
+            max_val = df[['Economic Score','Social Score','Production Score']].max().max()
+
             fig_radar = go.Figure()
-            palette = px.colors.qualitative.Set2
+            palette = ['#2980b9', '#27ae60', '#f39c12', '#e74c3c',
+                       '#9b59b6', '#1abc9c', '#e67e22', '#34495e']
             for idx, (_, row) in enumerate(df.iterrows()):
                 vals = [row['Economic Score'], row['Social Score'], row['Production Score']]
-                vals += [vals[0]]
                 fig_radar.add_trace(go.Scatterpolar(
-                    r=vals, theta=categories + [categories[0]],
-                    fill='toself', name=row['Producer'],
-                    line_color=palette[idx % len(palette)],
+                    r=vals + [vals[0]],
+                    theta=categories + [categories[0]],
+                    fill='toself',
+                    name=row['Producer'],
+                    line=dict(color=palette[idx % len(palette)], width=2),
                     fillcolor=palette[idx % len(palette)],
-                    opacity=0.3
+                    opacity=0.25,
+                    hovertemplate='<b>%{fullData.name}</b><br>%{theta}: %{r:.4f}<extra></extra>'
                 ))
+
             fig_radar.update_layout(
-                polar=dict(radialaxis=dict(visible=True, range=[0, df[['Economic Score','Social Score','Production Score']].max().max() * 1.1])),
-                title='Radar — Score por Categoria',
+                polar=dict(
+                    bgcolor='rgba(240,247,255,0.5)',
+                    radialaxis=dict(
+                        visible=True,
+                        range=[0, max_val * 1.15],
+                        tickformat='.3f',
+                        tickfont=dict(size=9, color='#666'),
+                        gridcolor='#d0e4f7',
+                        linecolor='#d0e4f7',
+                        nticks=5,
+                    ),
+                    angularaxis=dict(
+                        tickfont=dict(size=13, color='#1a5276', family='Inter'),
+                        linecolor='#d0e4f7',
+                        gridcolor='#d0e4f7',
+                    )
+                ),
+                title=dict(
+                    text='Radar — Score por Categoria / Category Score Radar',
+                    font=dict(size=13, color='#1a5276'),
+                    x=0.5
+                ),
                 paper_bgcolor='white',
-                height=400,
-                font=dict(family='Inter')
+                height=420,
+                font=dict(family='Inter'),
+                legend=dict(
+                    orientation='h',
+                    yanchor='bottom', y=-0.15,
+                    xanchor='center', x=0.5,
+                    font=dict(size=10)
+                ),
+                margin=dict(t=60, b=60, l=60, r=60)
             )
             st.plotly_chart(fig_radar, use_container_width=True)
 
@@ -703,7 +986,7 @@ if st.session_state.results is not None:
 
     # ── Tab 5: Export ─────────────────────────────────────────────────────────
     with t5:
-        col1, col2 = st.columns(2)
+        col1, col2, col3 = st.columns(3)
         with col1:
             excel_data = to_excel(df)
             st.download_button(
@@ -722,4 +1005,17 @@ if st.session_state.results is not None:
                 mime='text/csv',
                 use_container_width=True
             )
+        with col3:
+            try:
+                pdf_data = to_pdf(df, {})
+                st.download_button(
+                    get_t('download_pdf'),
+                    data=pdf_data,
+                    file_name='dairy_ranking_report.pdf',
+                    mime='application/pdf',
+                    use_container_width=True
+                )
+            except Exception as e:
+                st.warning(f"PDF: instale reportlab. `pip install reportlab`")
         st.dataframe(df, use_container_width=True, hide_index=True)
+
